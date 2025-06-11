@@ -1,0 +1,70 @@
+pipeline {
+    agent any
+
+    environment {
+        PYTHON_EXEC = 'C:\\Users\\himan\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
+        GIT_CREDENTIALS_ID = credentials('Jenkins-Generic')
+    }
+
+    stages {
+
+        stage('Checkout with credentials') {
+            steps {
+                deleteDir()
+                script {
+                    withCredentials([string(credentialsId: 'Jenkins-Generic', variable: 'GIT_TOKEN')]) {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "*/main"]],
+                            userRemoteConfigs: [[
+                                url: "https://${GIT_TOKEN}@github.com/PyLAB2025/promotion-repo.git"
+                            ]]
+                        ])
+                    }
+                }
+            }
+        }
+
+        stage('Load and Run script1.py') {
+            steps {
+                configFileProvider([configFile(fileId: 'merger', targetLocation: 'merger.py')]) {
+                    withCredentials([string(credentialsId: 'Jenkins-Generic', variable: 'GIT_TOKEN')]) {
+                        script {
+                            def result = bat(
+                                script: "${env.PYTHON_EXEC} merger.py ${env.lower_env} ${env.higher_env} ${env.github_url} ${env.new_version}",
+                                returnStdout: true
+                            ).trim()
+
+                            def (x1, x2, low, high, isNew) = result.tokenize(',')
+
+                            echo "1 ${x1}"
+                            echo "2 ${x2}"
+                            echo "3 ${low}"
+                            echo "4 ${high}"
+                            echo "5 ${isNew}"
+
+                            env.X1_BRANCH = x1
+                            env.X2_BRANCH = x2
+                            env.LOWER_ENV = low
+                            env.HIGHER_ENV = high
+                            env.NEW_BRANCH = isNew.toString()
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Trigger Push-Files-To-Branch') {
+            when {
+                expression { env.NEW_BRANCH?.trim()?.toLowerCase() == 'true' }
+            }
+            steps {
+                echo "Triggering Push-Files-To-Branch job for new branch: ${env.X2_BRANCH}"
+
+                configFileProvider([configFile(fileId: 'values-promotion', targetLocation: 'values-promotion.py')]) {
+                    bat "${env.PYTHON_EXEC} values-promotion.py ${env.X2_BRANCH}"
+                }
+            }
+        }
+    }
+}
