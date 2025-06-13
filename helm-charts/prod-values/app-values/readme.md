@@ -1,1 +1,1 @@
-This is a readme file
+The files of C:\WINDOWS\TEMP\tmpwmmo9h3w\new_branch\helm-charts\prod-values are stored here

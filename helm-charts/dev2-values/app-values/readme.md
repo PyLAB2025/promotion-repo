@@ -1,1 +1,1 @@
-This is a readme file
+The files of C:\WINDOWS\TEMP\tmpwmmo9h3w\new_branch\helm-charts\dev2-values are stored here
