@@ -1,1 +1,1 @@
-This is a readme file
+The files of C:\WINDOWS\TEMP\tmplwkq6gdy\new_branch\helm-charts\uat2-values are stored here
